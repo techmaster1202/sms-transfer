@@ -82,9 +82,9 @@ public class SmsForwarder {
             // Check response code
             int responseCode = connection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {
-                System.out.println("SMS sent successfully.");
+                Log.d(TAG, "Email sent successfully");
             } else {
-                System.out.println("Failed to send SMS. Response code: " + responseCode);
+                Log.d(TAG, "Failed to send SMS. Response code: " + responseCode);
             }
             connection.disconnect();
         } catch (Exception e) {

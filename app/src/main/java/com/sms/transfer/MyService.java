@@ -1,5 +1,6 @@
 package com.sms.transfer;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -22,8 +23,15 @@ public class MyService extends Service {
         return null; // We are not binding this service
     }
 
+    @SuppressLint("ForegroundServiceType")
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent == null) {
+            Log.e(TAG, "Intent is null. Service cannot start.");
+            stopSelf(); // Stop service if the intent is null to prevent unexpected behavior.
+            return START_NOT_STICKY;
+        }
+
         // Create notification channel for Android O and above
         createNotificationChannel();
 
@@ -33,7 +41,9 @@ public class MyService extends Service {
                 .setContentText("Running in background")
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setOngoing(true)
                 .build();
+
         // Start the service as a foreground service
         startForeground(1, notification);
 
@@ -43,10 +53,10 @@ public class MyService extends Service {
 
         if (sender != null && message != null) {
             Log.d(TAG, "Handling SMS from: " + sender);
-//            new SmsForwarder().sendToMail(sender, message);
             new SmsForwarder().sendToAPI(sender, receiver, message);
+        } else {
+            Log.e(TAG, "Invalid SMS data: sender or message is null.");
         }
-
         return START_STICKY; // Ensures the service runs continuously
     }
 
@@ -59,7 +69,7 @@ public class MyService extends Service {
     private void createNotificationChannel() {
         // Create a notification channel (required for Android O and above)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "SMS Service Channel";
+            CharSequence name = "SMS Listener Service";
             String description = "Channel for SMS listener service notifications";
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);

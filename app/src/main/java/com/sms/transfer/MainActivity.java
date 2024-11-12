@@ -26,12 +26,15 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.FOREGROUND_SERVICE,
             Manifest.permission.RECEIVE_BOOT_COMPLETED,
             Manifest.permission.INTERNET,
-            Manifest.permission.READ_PHONE_STATE
+            Manifest.permission.READ_PHONE_STATE,
     };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Request permissions only if they are not already granted
+        checkAndRequestPermissions();
+
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
@@ -43,9 +46,8 @@ public class MainActivity extends AppCompatActivity {
             binding.to.setText("SMS To: " + to);
             binding.content.setText("Content: " + content);
         });
+        LogPrinter.initializeLogFile();
 
-        // Request permissions only if they are not already granted
-        checkAndRequestPermissions();
     }
 
     private void checkAndRequestPermissions() {

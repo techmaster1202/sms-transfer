@@ -4,14 +4,19 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.telephony.SmsMessage;
-import android.telephony.TelephonyManager;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
 import android.util.Log;
 
 import androidx.core.app.ActivityCompat;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MySmsReceiver extends BroadcastReceiver {
 
@@ -31,7 +36,8 @@ public class MySmsReceiver extends BroadcastReceiver {
                     SmsMessage smsMessage = SmsMessage.createFromPdu((byte[]) pdu);
                     String messageBody = smsMessage.getMessageBody();
                     String sender = Objects.requireNonNull(smsMessage.getOriginatingAddress()).replaceAll("\\D", "");
-                    String receiver = getDevicePhoneNumber(context).replaceAll("\\D", "");
+                    int simSlotIndex = bundle.getInt("simSlotIndex", 0);
+                    String receiver = getDevicePhoneNumber(context, simSlotIndex);
                     Log.d(TAG, "SMS from: " + sender);
                     Log.d(TAG, "Message: " + messageBody);
                     Log.d(TAG, "Device Phone Number: " + receiver);
@@ -41,9 +47,15 @@ public class MySmsReceiver extends BroadcastReceiver {
                         // Start the background service to handle the SMS
                         Intent serviceIntent = new Intent(context, MyService.class);
                         serviceIntent.putExtra("sender", sender);
-                        serviceIntent.putExtra("message", messageBody);
                         serviceIntent.putExtra("receiver", receiver);
-                        context.startService(serviceIntent);
+                        serviceIntent.putExtra("message", messageBody);
+
+                        // Check Android version for service type
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            context.startForegroundService(serviceIntent); // Use this for API 26+
+                        } else {
+                            context.startService(serviceIntent); // Use this for lower versions
+                        }
                         mListener.onSMSReceive(sender, receiver, messageBody);
                     } else {
                         mListener.onSMSReceive("", "", "");
@@ -53,20 +65,30 @@ public class MySmsReceiver extends BroadcastReceiver {
         }
     }
 
-    private String getDevicePhoneNumber(Context context) {
-        TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+    private String getDevicePhoneNumber(Context context, int simSlotIndex) {
+        SubscriptionManager subscriptionManager = (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+
         if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
             return "Permission not granted";
         }
-        return telephonyManager.getLine1Number();
+
+        if (subscriptionManager != null) {
+            List<SubscriptionInfo> subscriptionInfoList = subscriptionManager.getActiveSubscriptionInfoList();
+            if (subscriptionInfoList != null && subscriptionInfoList.size() > simSlotIndex) {
+                SubscriptionInfo subscriptionInfo = subscriptionInfoList.get(simSlotIndex);
+                return subscriptionInfo.getNumber(); // This gets the phone number of the specified SIM slot
+            }
+        }
+        return "Unknown";
     }
+
 
     public boolean isMessageMatchingPattern(String messageBody) {
         if (messageBody.contains("Inicis")) {
-            String regex = "\\d{6}";
-            if (messageBody.matches(".*" + regex + ".*")) {
-                return true;
-            }
+            String regex = "\\d{6}"; // Match exactly 6 digits
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(messageBody);
+            return matcher.find(); // Check if the pattern exists anywhere in the string
         }
         return false;
     }

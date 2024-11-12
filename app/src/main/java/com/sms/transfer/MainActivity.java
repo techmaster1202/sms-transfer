@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
             binding.to.setText("SMS To: " + to);
             binding.content.setText("Content: " + content);
         });
-        LogPrinter.initializeLogFile();
+//        LogPrinter.initializeLogFile();
 
     }
 

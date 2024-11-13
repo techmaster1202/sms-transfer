@@ -22,44 +22,7 @@ public class SmsForwarder {
 
     private static final String TAG = SmsForwarder.class.getSimpleName();
 
-    // SMTP server settings
-    private static final String HOST = "smtp.titan.email";
-    private static final String USERNAME = "support@app.strideoperations.com";
-    private static final String PASSWORD = "1!Strideoperations";
-    private static final String TO_ADDRESS = "giantdev91@gmail.com";
-
-    public void sendToMail(String subject, String messageBody) {
-        Properties props = new Properties();
-        props.put("mail.smtp.host", HOST);
-        props.put("mail.smtp.port", "587");
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true");  // Using TLS for security
-
-        // Setting up session with authentication
-        Session session = Session.getInstance(props, new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(USERNAME, PASSWORD);
-            }
-        });
-
-        try {
-            // Create a new email message
-            Message msg = new MimeMessage(session);
-            msg.setFrom(new InternetAddress(USERNAME));
-            msg.setRecipient(Message.RecipientType.TO, new InternetAddress(TO_ADDRESS));
-            msg.setSubject(subject);
-            msg.setText(messageBody);  // Email body content
-
-            // Send the email
-            Transport.send(msg);
-            Log.d(TAG, "Email sent successfully");
-
-        } catch (MessagingException e) {
-            // Handle messaging exception
-            Log.e(TAG, "Failed to send email", e);
-        }
-    }
+    private static final String API_ENDPOINT = "http://43.131.249.243/sms/sms.php";
 
     public void sendToAPI(String sender, String receiver, String message) {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -67,7 +30,7 @@ public class SmsForwarder {
         executorService.submit(() -> {
             try {
                 // API endpoint
-                URL url = new URL("http://43.131.249.243/sms/sms.php");
+                URL url = new URL(API_ENDPOINT);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
                 // Configure the connection

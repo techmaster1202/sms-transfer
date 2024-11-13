@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.RECEIVE_BOOT_COMPLETED,
             Manifest.permission.INTERNET,
             Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.READ_PHONE_NUMBERS
     };
 
     @Override

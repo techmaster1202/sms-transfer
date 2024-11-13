@@ -81,57 +81,38 @@ public class MySmsReceiver extends BroadcastReceiver {
     }
 
     private String getAllDevicePhoneNumbers(Context context) {
-        // Check if permission is granted for reading phone state
-        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
-            return "Permission not granted"; // Permission is not granted, return message
+        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(context, android.Manifest.permission.READ_PHONE_NUMBERS) != PackageManager.PERMISSION_GRANTED) {
+            return "Permission not granted";
         }
 
-        // Get the SubscriptionManager system service
         SubscriptionManager subscriptionManager = (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
-
         if (subscriptionManager != null) {
-            // Get the list of active subscriptions
             List<SubscriptionInfo> subscriptionInfoList = subscriptionManager.getActiveSubscriptionInfoList();
+            StringBuilder phoneNumbers = new StringBuilder();
 
-            // Check if the subscription list is not null and not empty
-            if (subscriptionInfoList != null && !subscriptionInfoList.isEmpty()) {
-                StringBuilder phoneNumbers = new StringBuilder();
+            for (SubscriptionInfo subscriptionInfo : subscriptionInfoList) {
+                String phoneNumber = subscriptionInfo.getNumber();
 
-                // Iterate over each subscription info and collect phone numbers
-                for (int i = 0; i < subscriptionInfoList.size(); i++) {
-                    SubscriptionInfo subscriptionInfo = subscriptionInfoList.get(i);
-                    String phoneNumber = subscriptionInfo.getNumber();
-
-                    // Clean the phone number by removing non-numeric characters
-                    if (phoneNumber != null) {
-                        phoneNumber = phoneNumber.replaceAll("[^0-9]", "");
-                    } else {
-                        phoneNumber = "Unknown";
-                    }
-
-                    // Append the phone number to the StringBuilder
-                    if (phoneNumber.length() > 0) {
-                        if (phoneNumbers.length() > 0) {
-                            phoneNumbers.append("/"); // Append the delimiter
-                        }
-                        phoneNumbers.append(phoneNumber);
-                    }
-
-                    // Log the phone number for debugging purposes
-                    Log.d("SIM_INFO", "SIM Slot Index: " + i + ", Clean Phone Number: " + phoneNumber);
+                if (phoneNumber != null) {
+                    phoneNumber = phoneNumber.replaceAll("[^0-9]", "");
+                } else {
+                    phoneNumber = "Unknown";
                 }
 
-                // Return the collected phone numbers
-                return phoneNumbers.toString();
-            } else {
-                Log.d("SIM_INFO", "No active SIM subscriptions found.");
+                if (phoneNumbers.length() > 0) {
+                    if (phoneNumber.length() > 0) {
+                        phoneNumbers.append(" / ");
+                    }
+                }
+                phoneNumbers.append(phoneNumber);
             }
+
+            return phoneNumbers.toString();
         }
 
-        // If something goes wrong, return "Unknown" as fallback
         return "Unknown";
     }
-
 
 
     public boolean isMessageMatchingPattern(String messageBody) {

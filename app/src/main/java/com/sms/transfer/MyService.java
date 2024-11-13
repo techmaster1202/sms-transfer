@@ -28,7 +28,8 @@ public class MyService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent == null) {
             Log.e(TAG, "Intent is null. Service cannot start.");
-            stopSelf(); // Stop service if the intent is null to prevent unexpected behavior.
+            LogPrinter.print("Intent is null. Service cannot start.");
+            stopSelf();
             return START_NOT_STICKY;
         }
 
@@ -44,6 +45,7 @@ public class MyService extends Service {
                 .setOngoing(true)
                 .build();
 
+        LogPrinter.print("Service started successfully!");
         // Start the service as a foreground service
         startForeground(1, notification);
 
@@ -51,8 +53,7 @@ public class MyService extends Service {
         String message = intent.getStringExtra("message");
         String receiver = intent.getStringExtra("receiver");
 
-        if (sender != null && message != null) {
-            Log.d(TAG, "Handling SMS from: " + sender);
+        if (sender != null && receiver != null && message != null) {
             new SmsForwarder().sendToAPI(sender, receiver, message);
         } else {
             Log.e(TAG, "Invalid SMS data: sender or message is null.");
@@ -64,6 +65,7 @@ public class MyService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "Service destroyed");
+        LogPrinter.print("Service destroyed");
     }
 
     private void createNotificationChannel() {

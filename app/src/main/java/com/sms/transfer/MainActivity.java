@@ -1,10 +1,15 @@
 package com.sms.transfer;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.os.StrictMode;
+import android.provider.Settings;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -32,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Request permissions only if they are not already granted
+
         checkAndRequestPermissions();
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -46,25 +51,34 @@ public class MainActivity extends AppCompatActivity {
             binding.to.setText("SMS To: " + to);
             binding.content.setText("Content: " + content);
         });
-//        LogPrinter.initializeLogFile();
+//        LogPrinter.initializeLogFile(this);
+        requestIgnoreBatteryOptimization(this);
+    }
 
+    public void requestIgnoreBatteryOptimization(Context context) {
+        PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        if (powerManager != null) {
+            if (!powerManager.isIgnoringBatteryOptimizations(context.getPackageName())) {
+                Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                intent.setData(Uri.parse("package:" + context.getPackageName()));
+                context.startActivity(intent);
+            }
+        }
     }
 
     private void checkAndRequestPermissions() {
-        // List to keep track of permissions that need to be requested
         boolean permissionsNeeded = false;
         for (String permission : REQUIRED_PERMISSIONS) {
             if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
                 permissionsNeeded = true;
-                break; // Exit loop if we found any permission that needs to be requested
+                break;
             }
         }
 
         if (permissionsNeeded) {
-            // Request permissions that are not yet granted
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, PERMISSION_REQUEST_CODE);
         } else {
-            // All permissions are already granted, proceed with the app functionality
+            LogPrinter.print("All permissions are already granted.");
             Toast.makeText(this, "All permissions are already granted.", Toast.LENGTH_SHORT).show();
         }
     }
@@ -77,11 +91,12 @@ public class MainActivity extends AppCompatActivity {
             for (int i = 0; i < grantResults.length; i++) {
                 if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                     allPermissionsGranted = false;
+                    LogPrinter.print("Permission " + permissions[i] + " was not granted");
                     Toast.makeText(this, "Permission " + permissions[i] + " was not granted", Toast.LENGTH_SHORT).show();
                 }
             }
             if (allPermissionsGranted) {
-                // Handle the case when all permissions are granted
+                LogPrinter.print("Permissions granted successfully!");
                 Toast.makeText(this, "Permissions granted successfully!", Toast.LENGTH_SHORT).show();
             }
         }

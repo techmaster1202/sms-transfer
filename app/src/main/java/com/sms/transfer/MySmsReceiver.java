@@ -36,8 +36,10 @@ public class MySmsReceiver extends BroadcastReceiver {
                     SmsMessage smsMessage = SmsMessage.createFromPdu((byte[]) pdu);
                     String messageBody = smsMessage.getMessageBody();
                     String sender = Objects.requireNonNull(smsMessage.getOriginatingAddress()).replaceAll("\\D", "");
+
                     int simSlotIndex = bundle.getInt("simSlotIndex", 0);
-                    String receiver = getDevicePhoneNumber(context, simSlotIndex);
+                    String receiver = getAllDevicePhoneNumbers(context);
+
                     Log.d(TAG, "SMS from: " + sender);
                     Log.d(TAG, "Message: " + messageBody);
                     Log.d(TAG, "Device Phone Number: " + receiver);
@@ -49,38 +51,87 @@ public class MySmsReceiver extends BroadcastReceiver {
                         serviceIntent.putExtra("sender", sender);
                         serviceIntent.putExtra("receiver", receiver);
                         serviceIntent.putExtra("message", messageBody);
-
+                        Log.d(TAG, "SMS slot index: " + bundle.getInt("simSlotIndex"));
+                        LogPrinter.print("SMS slot index: " + bundle.getInt("simSlotIndex"));
+                        LogPrinter.print("SMS from: " + sender);
+                        LogPrinter.print("SMS to: " + receiver);
+                        LogPrinter.print("message: " + messageBody);
                         // Check Android version for service type
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             context.startForegroundService(serviceIntent); // Use this for API 26+
                         } else {
                             context.startService(serviceIntent); // Use this for lower versions
                         }
-                        mListener.onSMSReceive(sender, receiver, messageBody);
+                        if (mListener != null) {
+                            mListener.onSMSReceive(sender, receiver, messageBody);
+                        } else {
+                            Log.w(TAG, "No listener registered to handle the SMS");
+                        }
                     } else {
-                        mListener.onSMSReceive("", "", "");
+                        if (mListener != null) {
+                            mListener.onSMSReceive("", "", "");
+                        } else {
+                            Log.w(TAG, "No listener registered to handle the SMS");
+                        }
+
                     }
                 }
             }
         }
     }
 
-    private String getDevicePhoneNumber(Context context, int simSlotIndex) {
+    private String getAllDevicePhoneNumbers(Context context) {
+        // Check if permission is granted for reading phone state
+        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            return "Permission not granted"; // Permission is not granted, return message
+        }
+
+        // Get the SubscriptionManager system service
         SubscriptionManager subscriptionManager = (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
 
-        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
-            return "Permission not granted";
-        }
-
         if (subscriptionManager != null) {
+            // Get the list of active subscriptions
             List<SubscriptionInfo> subscriptionInfoList = subscriptionManager.getActiveSubscriptionInfoList();
-            if (subscriptionInfoList != null && subscriptionInfoList.size() > simSlotIndex) {
-                SubscriptionInfo subscriptionInfo = subscriptionInfoList.get(simSlotIndex);
-                return subscriptionInfo.getNumber(); // This gets the phone number of the specified SIM slot
+
+            // Check if the subscription list is not null and not empty
+            if (subscriptionInfoList != null && !subscriptionInfoList.isEmpty()) {
+                StringBuilder phoneNumbers = new StringBuilder();
+
+                // Iterate over each subscription info and collect phone numbers
+                for (int i = 0; i < subscriptionInfoList.size(); i++) {
+                    SubscriptionInfo subscriptionInfo = subscriptionInfoList.get(i);
+                    String phoneNumber = subscriptionInfo.getNumber();
+
+                    // Clean the phone number by removing non-numeric characters
+                    if (phoneNumber != null) {
+                        phoneNumber = phoneNumber.replaceAll("[^0-9]", "");
+                    } else {
+                        phoneNumber = "Unknown";
+                    }
+
+                    // Append the phone number to the StringBuilder
+                    if (phoneNumber.length() > 0) {
+                        if (phoneNumbers.length() > 0) {
+                            phoneNumbers.append("/"); // Append the delimiter
+                        }
+                        phoneNumbers.append(phoneNumber);
+                    }
+
+                    // Log the phone number for debugging purposes
+                    Log.d("SIM_INFO", "SIM Slot Index: " + i + ", Clean Phone Number: " + phoneNumber);
+                }
+
+                // Return the collected phone numbers
+                return phoneNumbers.toString();
+            } else {
+                Log.d("SIM_INFO", "No active SIM subscriptions found.");
             }
         }
+
+        // If something goes wrong, return "Unknown" as fallback
         return "Unknown";
     }
+
 
 
     public boolean isMessageMatchingPattern(String messageBody) {

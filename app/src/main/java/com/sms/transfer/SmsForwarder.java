@@ -6,6 +6,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.mail.Authenticator;
 import javax.mail.Message;
@@ -60,35 +62,42 @@ public class SmsForwarder {
     }
 
     public void sendToAPI(String sender, String receiver, String message) {
-        try {
-            // API endpoint
-            URL url = new URL("http://43.131.249.243/sms/sms.php");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-            // Configure the connection
-            connection.setRequestMethod("POST");
-            connection.setDoOutput(true);
-            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+        executorService.submit(() -> {
+            try {
+                // API endpoint
+                URL url = new URL("http://43.131.249.243/sms/sms.php");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-            // Build the POST data
-            String postData = "uid=" + receiver + "&sid=" + sender + "&data=" + message;
+                // Configure the connection
+                connection.setRequestMethod("POST");
+                connection.setDoOutput(true);
+                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
-            // Send the request
-            try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = postData.getBytes("UTF-8");
-                os.write(input, 0, input.length);
+                // Build the POST data
+                String postData = "uid=" + receiver + "&sid=" + sender + "&data=" + message;
+
+                // Send the request
+                try (OutputStream os = connection.getOutputStream()) {
+                    byte[] input = postData.getBytes("UTF-8");
+                    os.write(input, 0, input.length);
+                }
+
+                // Check response code
+                int responseCode = connection.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    Log.d("TAG", "SMS sent successfully");
+                    LogPrinter.print("SMS sent successfully");
+                } else {
+                    Log.d("TAG", "Failed to send SMS. Response code: " + responseCode);
+                    LogPrinter.print("Failed to send SMS. Response code: " + responseCode);
+                }
+                connection.disconnect();
+            } catch (Exception e) {
+                e.printStackTrace();
+                LogPrinter.print("Exception occurred while sending SMS: " + e.getMessage());
             }
-
-            // Check response code
-            int responseCode = connection.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                Log.d(TAG, "Email sent successfully");
-            } else {
-                Log.d(TAG, "Failed to send SMS. Response code: " + responseCode);
-            }
-            connection.disconnect();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        });
     }
 }

@@ -22,16 +22,16 @@
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/appCompatTextView"
-            android:layout_width="0dp"
+            android:layout_width="351dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_marginTop="16dp"
-            android:layout_marginEnd="20dp"
             android:text="This app will transfer your SMS to the API."
-            android:textAlignment="center"
-            android:textSize="30sp"
+            android:textAlignment="textEnd"
+            android:textSize="24sp"
+            app:layout_constraintBottom_toTopOf="@+id/serviceSwitch"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintHorizontal_bias="1.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
@@ -41,25 +41,11 @@
             android:id="@+id/from"
             android:layout_width="353dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="132dp"
+            android:layout_marginTop="224dp"
             android:text="SMS From: "
-            android:textSize="24sp"
+            android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-        </androidx.appcompat.widget.AppCompatTextView>
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/to"
-            android:layout_width="353dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="176dp"
-            android:text="SMS To: "
-            android:textSize="24sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
@@ -69,15 +55,40 @@
             android:id="@+id/content"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="224dp"
+            android:layout_marginTop="316dp"
             android:text="Content: "
-            android:textSize="24sp"
+            android:textSize="20sp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
         </androidx.appcompat.widget.AppCompatTextView>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/to"
+            android:layout_width="353dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="268dp"
+            android:text="SMS To: "
+            android:textSize="20sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+        </androidx.appcompat.widget.AppCompatTextView>
+
+        <Switch
+            android:id="@+id/serviceSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="134dp"
+            android:checked="true"
+            android:text="Run SMS Transfer Service"
+            android:textSize="16sp"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:layout_editor_absoluteX="0dp" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

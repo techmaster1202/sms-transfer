@@ -3,6 +3,7 @@ package com.sms.transfer;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -10,6 +11,7 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.StrictMode;
 import android.provider.Settings;
+import android.widget.CompoundButton;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -54,6 +56,41 @@ public class MainActivity extends AppCompatActivity {
         });
 //        LogPrinter.initializeLogFile(this);
         requestIgnoreBatteryOptimization(this);
+
+        // Retrieve the saved switch state from SharedPreferences
+        SharedPreferences sharedPreferences = getSharedPreferences("appPreferences", MODE_PRIVATE);
+        boolean isServiceSwitchOn = sharedPreferences.getBoolean("serviceSwitchState", false); // Default is false
+        binding.serviceSwitch.setChecked(isServiceSwitchOn);
+
+        // Optionally start the service if the switch is on
+        if (isServiceSwitchOn) {
+            Intent serviceIntent = new Intent(MainActivity.this, MyService.class);
+            startForegroundService(serviceIntent);
+        }
+
+        binding.serviceSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                // Save the switch state to SharedPreferences
+                SharedPreferences sharedPreferences = getSharedPreferences("appPreferences", MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putBoolean("serviceSwitchState", isChecked);
+                editor.apply();
+
+                if (isChecked) {
+                    // Start the foreground service when the switch is turned on
+                    Intent serviceIntent = new Intent(MainActivity.this, MyService.class);
+                    startForegroundService(serviceIntent);
+                    Toast.makeText(MainActivity.this, "Service started", Toast.LENGTH_SHORT).show();
+                } else {
+                    // Stop the foreground service when the switch is turned off
+                    Intent serviceIntent = new Intent(MainActivity.this, MyService.class);
+                    stopService(serviceIntent);
+                    Toast.makeText(MainActivity.this, "Service stopped", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
     }
 
     public void requestIgnoreBatteryOptimization(Context context) {

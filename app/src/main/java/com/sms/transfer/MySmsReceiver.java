@@ -1,8 +1,11 @@
 package com.sms.transfer;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -40,32 +43,37 @@ public class MySmsReceiver extends BroadcastReceiver {
                     int simSlotIndex = bundle.getInt("simSlotIndex", 0);
                     String receiver = getAllDevicePhoneNumbers(context);
 
-                    Log.d(TAG, "SMS from: " + sender);
-                    Log.d(TAG, "Message: " + messageBody);
-                    Log.d(TAG, "Device Phone Number: " + receiver);
-
                     boolean isMatching = isMessageMatchingPattern(messageBody);
                     if (isMatching) {
-                        // Start the background service to handle the SMS
-                        Intent serviceIntent = new Intent(context, MyService.class);
-                        serviceIntent.putExtra("sender", sender);
-                        serviceIntent.putExtra("receiver", receiver);
-                        serviceIntent.putExtra("message", messageBody);
-                        Log.d(TAG, "SMS slot index: " + bundle.getInt("simSlotIndex"));
-                        LogPrinter.print("SMS slot index: " + bundle.getInt("simSlotIndex"));
-                        LogPrinter.print("SMS from: " + sender);
-                        LogPrinter.print("SMS to: " + receiver);
-                        LogPrinter.print("message: " + messageBody);
-                        // Check Android version for service type
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            context.startForegroundService(serviceIntent); // Use this for API 26+
-                        } else {
-                            context.startService(serviceIntent); // Use this for lower versions
-                        }
-                        if (mListener != null) {
-                            mListener.onSMSReceive(sender, receiver, messageBody);
-                        } else {
-                            Log.w(TAG, "No listener registered to handle the SMS");
+                        // Retrieve the saved switch state from SharedPreferences
+                        SharedPreferences sharedPreferences = context.getSharedPreferences("appPreferences", MODE_PRIVATE);
+                        boolean isServiceSwitchOn = sharedPreferences.getBoolean("serviceSwitchState", false);
+                        if (isServiceSwitchOn) {
+                            // Start the background service to handle the SMS
+                            Intent serviceIntent = new Intent(context, MyService.class);
+                            serviceIntent.putExtra("sender", sender);
+                            serviceIntent.putExtra("receiver", receiver);
+                            serviceIntent.putExtra("message", messageBody);
+                            Log.d(TAG, "SMS from: " + sender);
+                            Log.d(TAG, "SMS to: " + receiver);
+                            Log.d(TAG, "message: " + messageBody);
+
+                            LogPrinter.print("SMS from: " + sender);
+                            LogPrinter.print("SMS to: " + receiver);
+                            LogPrinter.print("message: " + messageBody);
+
+                            // Check Android version for service type
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                context.startForegroundService(serviceIntent); // Use this for API 26+
+                            } else {
+                                context.startService(serviceIntent); // Use this for lower versions
+                            }
+
+                            if (mListener != null) {
+                                mListener.onSMSReceive(sender, receiver, messageBody);
+                            } else {
+                                Log.w(TAG, "No listener registered to handle the SMS");
+                            }
                         }
                     } else {
                         if (mListener != null) {

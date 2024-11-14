@@ -86,6 +86,7 @@
             android:layout_marginTop="134dp"
             android:checked="true"
             android:text="Run SMS Transfer Service"
+            android:textColorLink="#2196F3"
             android:textSize="16sp"
             app:layout_constraintTop_toTopOf="parent"
             tools:layout_editor_absoluteX="0dp" />
